@@ -48,7 +48,7 @@ struct ContentView: View {
                     }
                 }
             }
-            .navigationTitle("Carrera")
+            .navigationTitle("Carreras")
             .toolbar {
                 Button("Agregar", systemImage: "plus", action: agregar)
                 EditButton()
