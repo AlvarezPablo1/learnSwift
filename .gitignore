@@ -16,3 +16,6 @@ DerivedData/
 # Archivos temporales
 *.swp
 *~
+
+# Config personal de Claude (los comandos en .claude/commands/ sí se versionan)
+.claude/settings.local.json
