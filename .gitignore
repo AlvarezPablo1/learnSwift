@@ -1,0 +1,18 @@
+# macOS
+.DS_Store
+
+# Datos de usuario de Xcode
+xcuserdata/
+*.xcuserstate
+
+# Carpetas de compilación
+build/
+DerivedData/
+
+# Dependencias (Swift Package Manager)
+.build/
+.swiftpm/
+
+# Archivos temporales
+*.swp
+*~
