@@ -58,7 +58,7 @@ struct ContentView: View {
 
     //MODIFICA EL CONTEXTO AGREGANDO UN OBJETO NUEVO
     private func agregar() {
-        context.insert(Subject(type: "Nueva"))
+        context.insert(Subject(type: "Nueva materia"))
     }
     //MODIFICA EL CONTEXTO ELIMINANDO UN OBJETO
     private func borrar(_ offsets: IndexSet) {
