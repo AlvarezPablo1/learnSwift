@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		6E5BB6143061B1B000A9FB3C /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 6E5BB6123061B1AA00A9FB3C /* .gitignore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		6E6131923045C45B00742002 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -24,6 +28,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		6E5BB6123061B1AA00A9FB3C /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		6E6131843045C45A00742002 /* learnXcode.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = learnXcode.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6E6131913045C45B00742002 /* learnXcodeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = learnXcodeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6E61319B3045C45B00742002 /* learnXcodeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = learnXcodeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -79,6 +84,7 @@
 				6E6131943045C45B00742002 /* learnXcodeTests */,
 				6E61319E3045C45B00742002 /* learnXcodeUITests */,
 				6E6131853045C45A00742002 /* Products */,
+				6E5BB6123061B1AA00A9FB3C /* .gitignore */,
 			);
 			sourceTree = "<group>";
 		};
@@ -212,6 +218,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6E5BB6143061B1B000A9FB3C /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
