@@ -8,7 +8,7 @@
 import SwiftUI
 import SwiftData
 
-struct ContentView: View {
+struct SubjectView: View {
     //QUERY CONSULTA LA BBDD, TRAE EL ARRAY (SUBJECT EN ESTE CASO) Y SE ACTUALIZA CUANDO CAMBIA
     @Query private var subjects: [Subject]
     // CONSULTA EN LA BBDD Y FILTRA POR AQUELLOS OBJETOS CUYO "HASTASK" SEA TRUE
@@ -26,11 +26,9 @@ struct ContentView: View {
                     }else {
                         ForEach(subjects) { sub in
                             NavigationLink {
-                                DetalleView(subject: sub)
+                                Detail(subject: sub)
                             } label: {
-                                Text(sub.type)
-                                    .font(.headline)
-                                    .foregroundStyle(sub.hasTask ? .red : .green)
+                                SubjectRow(subject: sub)
                             }
                         }
                         .onDelete(perform: borrar)
@@ -58,11 +56,6 @@ struct ContentView: View {
             }
             .navigationTitle("Carreras")
             .toolbar {
-                NavigationLink {
-                        HolidayView()
-                    } label: {
-                        Image(systemName: "calendar")
-                    }
                 Button("Agregar", systemImage: "plus", action: agregar)
                 EditButton()
             }
@@ -81,6 +74,6 @@ struct ContentView: View {
     }
 }
 #Preview {
-    ContentView()
+    SubjectView()
         .modelContainer(for: Subject.self, inMemory: true)
 }

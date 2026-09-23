@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct DetalleView: View {
+struct Detail: View {
     @Bindable var subject: Subject
 
     var body: some View {

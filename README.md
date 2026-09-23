@@ -14,6 +14,8 @@ Apuntes personales del proceso de aprendizaje de **Swift**, **SwiftUI** y el eco
 | 6 | [Persistencia (método copia)](#-lección-6-persistencia-método-copia) | `UserDefaults` / JSON con `Codable` |
 | 7 | [Persistencia (SwiftData)](#-lección-7-persistencia-referenciasswiftdata) | Base de datos con `@Model` y `@Query` |
 | 8 | [Consumir APIs externas](#-lección-8-consumir-apis-externas) | `async`/`await`, `URLSession` y `Codable` |
+| 9 | [Máquina de estados](#-lección-9-máquina-de-estados-enum) | Manejar carga/error/datos con un `enum` |
+| 10 | [Componentes y pestañas](#-lección-10-componentes-y-pestañas) | Extraer vistas reutilizables y `TabView` |
 
 ---
 
@@ -496,3 +498,166 @@ private func cargar() async {
 - `.overlay { }` → muestra algo **por encima** de la vista. Se usa para el estado de carga y el de error:
   - `ProgressView("Cargando...")` → el spinner mientras carga.
   - `ContentUnavailableView` → pantalla de "no se pudo cargar" con un botón de reintentar.
+
+---
+
+## 🔀 Lección 9: Máquina de estados (enum)
+
+- En la lección 8 manejábamos la pantalla con **3 `@State` sueltos** (`holidays`, `loading`, `errorMsj`). El problema es que pueden quedar en combinaciones **contradictorias**: por ejemplo `loading = true` **y** un `errorMsj` al mismo tiempo, o datos cargados con el error todavía prendido.
+
+- La solución es una **máquina de estados**: un `enum` que representa que la vista está en **un solo estado a la vez** (o cargando, o error, o con datos). Es imposible que estén dos a la vez.
+
+**1) El enum** → cada caso puede llevar **valores asociados** (datos que ese estado necesita).
+
+```swift
+enum HolidayState {
+    case loading
+    case errorMsj(String)
+    case holidays([Holiday])
+}
+```
+
+- `case errorMsj(String)` → el estado de error viene **con** su mensaje.
+- `case holidays([Holiday])` → el estado de éxito viene **con** la lista de feriados.
+
+**2) Un solo `@State`** → reemplaza a los tres anteriores.
+
+```swift
+@State private var state: HolidayState = .loading
+```
+
+**3) El `body` hace un `switch`** sobre el estado y muestra lo que corresponda a cada caso.
+
+```swift
+var body: some View {
+    Group {
+        switch state {
+        case .loading:
+            ProgressView("Cargando...")
+
+        case .errorMsj(let mensaje):
+            ContentUnavailableView { ... }
+
+        case .holidays(let holidays):
+            List { ... }
+        }
+    }
+    .navigationTitle("Feriados \(year)")
+    .task { await cargar() }
+    .refreshable { await cargar() }
+}
+```
+
+- `case .errorMsj(let mensaje)` → extrae el valor asociado (el texto del error) para poder mostrarlo.
+- `Group { }` → envuelve el `switch` para poder aplicarle modificadores comunes a **todos** los casos (`.navigationTitle`, `.task`, `.refreshable`) una sola vez.
+
+**4) La función de carga** solo cambia el estado, sin manejar flags sueltos.
+
+```swift
+private func cargar() async {
+    state = .loading
+    do {
+        let datos = try await HolidayService().fetch(year: year)
+        state = .holidays(datos)
+    } catch {
+        state = .errorMsj(error.localizedDescription)
+    }
+}
+```
+
+- Ya no hace falta el `defer { loading = false }`: al pasar a `.holidays` o `.errorMsj`, el estado de carga desaparece solo.
+
+> **💡 Idea clave:** modelar los estados con un `enum` hace **imposibles los estados imposibles**. La vista siempre está en un caso válido y bien definido.
+
+---
+
+## 🧩 Lección 10: Componentes y pestañas
+
+### Parte A — Componentes reutilizables
+
+- Cuando el `body` de una lista se llena de código (varios `Text`, `HStack`, estilos...), conviene **extraer cada fila a su propio `struct` View**. Queda más limpio, se puede **reutilizar** y cada componente tiene su propio `#Preview`.
+
+- El componente **recibe sus datos por `let`** cuando solo los muestra (solo lectura).
+
+```swift
+struct SubjectRow: View {
+    let subject: Subject
+
+    var body: some View {
+        HStack {
+            Text(subject.type)
+                .font(.headline)
+            Spacer()
+            if subject.hasTask {
+                Image(systemName: "exclamationmark.circle.fill")
+                    .foregroundStyle(.red)
+            }
+        }
+    }
+}
+```
+
+- Después, en la vista principal, el `body` queda mucho más corto:
+
+```swift
+ForEach(subjects) { sub in
+    NavigationLink {
+        Detail(subject: sub)
+    } label: {
+        SubjectRow(subject: sub)   // 👈 el componente
+    }
+}
+```
+
+- **`let` vs `@Bindable`:** depende de qué hace el componente con el dato.
+  - Solo **muestra** el dato → `let subject: Subject` (ej: `SubjectRow`, `HolidayRow`).
+  - **Edita** el dato → `@Bindable var subject: Subject` (ej: `Detail`, que tiene el `Form` para modificar).
+
+- Cada componente puede tener su propio `#Preview` con datos de ejemplo, para verlo aislado sin correr toda la app:
+
+```swift
+#Preview {
+    List {
+        SubjectRow(subject: Subject(type: "Historia", hasTask: true))
+        SubjectRow(subject: Subject(type: "Lengua"))
+    }
+}
+```
+
+### Parte B — Pestañas (`TabView`)
+
+- Para tener varias secciones con una barra de pestañas abajo se usa **`TabView`**, y cada pestaña es un **`Tab`** con su título e ícono (SF Symbol).
+
+```swift
+struct RootView: View {
+    @Query(filter: #Predicate<Subject> { $0.hasTask }) private var pending: [Subject]
+
+    var body: some View {
+        TabView {
+            Tab("Materias", systemImage: "book") {
+                SubjectView()
+            }
+            .badge(pending.count)
+
+            Tab("Feriados", systemImage: "calendar") {
+                NavigationStack {
+                    HolidayView()
+                }
+            }
+        }
+    }
+}
+```
+
+- `Tab("Materias", systemImage: "book") { ... }` → una pestaña con su nombre, ícono y la vista que muestra.
+- `.badge(pending.count)` → agrega un **globito rojo** con un número sobre la pestaña (acá, la cantidad de tareas pendientes).
+- Cada pestaña puede tener su **propio `NavigationStack`**, así cada sección navega de forma independiente.
+
+- Por último, el root del proyecto (`learnXcodeApp`) ahora muestra `RootView` en vez de una vista suelta:
+
+```swift
+WindowGroup {
+    RootView()
+}
+.modelContainer(for: Subject.self)
+```
