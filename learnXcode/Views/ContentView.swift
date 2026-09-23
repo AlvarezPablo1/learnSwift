@@ -21,28 +21,36 @@ struct ContentView: View {
         NavigationStack {
             List {
                 Section("Materias") {
-                    ForEach(subjects) { sub in
-                        NavigationLink {
-                            DetalleView(subject: sub)
-                        } label: {
-                            Text(sub.type)
-                                .font(.headline)
-                                .foregroundStyle(sub.hasTask ? .red : .green)
+                    if subjects.isEmpty {
+                        Text("No tenés materias asignadas")
+                    }else {
+                        ForEach(subjects) { sub in
+                            NavigationLink {
+                                DetalleView(subject: sub)
+                            } label: {
+                                Text(sub.type)
+                                    .font(.headline)
+                                    .foregroundStyle(sub.hasTask ? .red : .green)
+                            }
                         }
+                        .onDelete(perform: borrar)
                     }
-                    .onDelete(perform: borrar)
                 }
                 Section("Tareas (\(pending.count) pendientes)") {
-                    ForEach(pending) { pen in
-                        Button {
-                            withAnimation(.smooth) {
-                                pen.hasTask.toggle()
-                            }
-                        } label: {
-                            HStack {
-                                Text(pen.type)
-                                Spacer()
-                                Image(systemName: "circle")
+                    if pending.isEmpty {
+                        Text("No tenés tareas pendientes")
+                    }else {
+                        ForEach(pending) { pen in
+                            Button {
+                                withAnimation(.smooth) {
+                                    pen.hasTask.toggle()
+                                }
+                            } label: {
+                                HStack {
+                                    Text(pen.type)
+                                    Spacer()
+                                    Image(systemName: "circle")
+                                }
                             }
                         }
                     }
@@ -50,6 +58,11 @@ struct ContentView: View {
             }
             .navigationTitle("Carreras")
             .toolbar {
+                NavigationLink {
+                        HolidayView()
+                    } label: {
+                        Image(systemName: "calendar")
+                    }
                 Button("Agregar", systemImage: "plus", action: agregar)
                 EditButton()
             }

@@ -297,8 +297,161 @@ DATO EXTRA:
 
 -- LECCION 7: PERSISTENCIA (REFERENCIAS/SWIFTDATA) --
 
+*A diferencia del metodo de COPIA (leccion 6), donde nosotros manualmente transformabamos a JSON y guardabamos/leiamos de la memoria, SwiftData es una base de datos que maneja Apple por nosotros. Nos olvidamos de armar el save(), load(), init() y didSet: SwiftData guarda los cambios solo.
+
+*Al trabajar por REFERENCIAS, el modelo pasa a ser una CLASS en vez de un STRUCT. Ademas ya no hacen falta las interfaces "Codable" ni "Identifiable", ni el campo "id": SwiftData los maneja internamente.
+
+    1) MODELO (@Model): El macro "@Model" convierte una clase en algo guardable en la base de datos.
+
+        EJ:
+
+            import SwiftData
+
+            @Model
+            class Subject {
+                var type: String
+                var hasTask: Bool
+
+                init(type: String, hasTask: Bool = false) {
+                    self.type = type
+                    self.hasTask = hasTask
+                }
+            }
+
+            - "@Model" -> transforma la clase en una tabla de la base de datos
+            - No hace falta "id", ni "Codable", ni "Identifiable" (los agrega SwiftData solo)
+
+    2) CONTAINER: En el root del proyecto (learnXcodeApp) le decimos a SwiftData que arme la base de datos usando como estructura nuestro modelo.
+
+        EJ:
+
+            WindowGroup {
+                ContentView()
+            }
+            .modelContainer(for: Subject.self)
+
+            - "modelContainer(for:)" -> crea y conecta la base de datos para ese modelo
+
+    3) @QUERY: Consulta la base de datos, trae el array del modelo y se actualiza SOLO cada vez que algo cambia (no hace falta recargar nada a mano).
+
+        EJ:
+
+            @Query private var subjects: [Subject]
+
+            *Tambien se le puede pasar un FILTRO con "#Predicate" para traer solo los que cumplan una condicion:
+
+            @Query(filter: #Predicate<Subject> { $0.hasTask }) private var pending: [Subject]
+
+            - Este "pending" trae unicamente las materias cuyo "hasTask" sea true
+            - El filtrado ocurre en la base de datos (mas eficiente que filtrar el array en memoria)
+
+    4) @ENVIRONMENT(\.modelContext): Es el "contexto" con el que modificamos la base de datos (insertar, borrar). El @Query solo LEE, el context es el que ESCRIBE.
+
+        EJ:
+
+            @Environment(\.modelContext) private var context
+
+            *Insertar (guardar) un objeto nuevo:
+
+                context.insert(Subject(type: "Nueva materia"))
+
+            *Borrar un objeto:
+
+                context.delete(subjects[i])
+
+            - En cuanto insertas/borras/modificas, los @Query se actualizan solos y la vista se redibuja
+            - Modificar una propiedad de un objeto ya guardado (ej: sub.hasTask.toggle()) tambien se guarda solo, sin llamar a ningun save()
+
+DATO EXTRA:
+
+    *Para el "preview" conviene usar una base de datos en memoria (no toca el disco), asi cada vez arranca limpia:
+
+        #Preview {
+            ContentView()
+                .modelContainer(for: Subject.self, inMemory: true)
+        }
 
 
-            
+
+-- LECCION 8: CONSUMIR APIS EXTERNAS --
+
+*Para traer datos de un servicio externo (una API) usamos "async/await": son funciones que tardan (van a internet, esperan la respuesta) sin congelar la app. Se separa en 3 partes: el MODELO (como llegan los datos), el SERVICIO (el llamado) y la VISTA (mostrar/manejar carga y errores).
+
+    1) MODELO: Como los datos vienen de un JSON de la API, el modelo es un STRUCT con la interface "Codable" (para poder decodificar el JSON) e "Identifiable" (para poder listarlo).
+
+        EJ:
+
+            struct Holiday: Codable, Identifiable {
+                let fecha: String
+                let tipo: String
+                let nombre: String
+
+                var id: String { fecha + nombre }
+            }
+
+            - "Codable" -> permite transformar el JSON de la API en este struct
+            - Como la API no nos da un "id", lo armamos nosotros combinando campos (fecha + nombre)
+            - Los nombres de los campos deben coincidir con los del JSON
+
+    2) SERVICIO: Struct con una funcion "async throws" que hace el llamado, valida la respuesta y decodifica.
+
+        EJ:
+
+            struct HolidayService {
+                func fetch(year: Int) async throws -> [Holiday] {
+                    let url = URL(string: "https://api.argentinadatos.com/v1/feriados/\(year)")!
+
+                    let (data, response) = try await URLSession.shared.data(from: url)
+
+                    guard let http = response as? HTTPURLResponse,
+                          http.statusCode == 200 else {
+                        throw URLError(.badServerResponse)
+                    }
+
+                    return try JSONDecoder().decode([Holiday].self, from: data)
+                }
+            }
+
+            - "async" -> la funcion tarda (espera la respuesta de internet)
+            - "throws" -> la funcion puede fallar (sin internet, error del server, etc)
+            - "await" -> "espera aca" hasta que vuelva la respuesta, sin congelar la app
+            - "URLSession.shared.data(from:)" -> hace el llamado y devuelve la data + la response
+            - "guard ... statusCode == 200" -> valida que el server respondio OK, si no, lanza un error (throw)
+            - "JSONDecoder().decode([Holiday].self, from: data)" -> transforma el JSON en el array de Holiday
+
+    3) VISTA: Maneja 3 estados con @State: los datos, el "cargando" y el mensaje de error.
+
+        EJ:
+
+            @State private var holidays: [Holiday] = []
+            @State private var loading = false
+            @State private var errorMsj: String?
+
+        *La funcion que llama al servicio maneja el loading y captura los errores:
+
+            private func cargar() async {
+                loading = true
+                defer { loading = false }
+
+                do {
+                    holidays = try await HolidayService().fetch(year: 2026)
+                    errorMsj = nil
+                } catch {
+                    errorMsj = error.localizedDescription
+                }
+            }
+
+            - "defer" -> parecido al "finally", se ejecuta si o si cuando termina la funcion (apaga el loading pase lo que pase)
+            - "do / catch" -> intenta el llamado; si falla (throw), cae en el catch y guarda el mensaje de error
+
+        *Modificadores clave en la vista:
+
+            - .task { await cargar() } -> llama al servicio automaticamente al abrir la vista. Si el usuario se va a otra pantalla mientras carga, corta el llamado solo (sin generar problemas)
+            - .refreshable { await cargar() } -> permite recargar tirando la lista hacia abajo (pull to refresh)
+            - .overlay { } -> muestra algo POR ENCIMA de la vista. Se usa para el estado de carga y el de error:
+                * ProgressView("Cargando...") -> el spinner mientras carga
+                * ContentUnavailableView -> pantalla de "no se pudo cargar" con un boton de reintentar
+
+
 
 
