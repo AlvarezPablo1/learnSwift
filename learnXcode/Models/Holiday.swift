@@ -15,13 +15,16 @@ struct Holiday: Codable, Identifiable {
     let nombre: String
 
     var id: String { fecha + nombre }
-    
-    // Cada feriado calcula su propio color según su tipo
+}
+
+// Cada feriado calcula su propio color según su tipo
+extension Holiday {
     var color: Color {
         switch tipo {
-        case "inamovible": return .red
-        case "trasladable": return .orange
-        default: return .green
+        case "inamovible": .red
+        case "trasladable": .orange
+        case "puente": .blue
+        default: .gray
         }
     }
 }

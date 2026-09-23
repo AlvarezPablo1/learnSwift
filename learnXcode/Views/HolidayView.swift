@@ -55,7 +55,7 @@ struct HolidayView: View {
                 }
             }
         }
-        .navigationTitle("Feriados \(year)")
+        .navigationTitle("Feriados \(String(year))")
         .task { await cargar() }
         .refreshable { await cargar() }
     }

@@ -35,11 +35,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		6E6131863045C45A00742002 /* learnXcode */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = learnXcode;
-			sourceTree = "<group>";
-		};
 		6E6131943045C45B00742002 /* learnXcodeTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = learnXcodeTests;
@@ -48,6 +43,11 @@
 		6E61319E3045C45B00742002 /* learnXcodeUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = learnXcodeUITests;
+			sourceTree = "<group>";
+		};
+		6EE0E14F30643458007477B5 /* learnXcode */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = learnXcode;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -80,7 +80,7 @@
 		6E61317B3045C45A00742002 = {
 			isa = PBXGroup;
 			children = (
-				6E6131863045C45A00742002 /* learnXcode */,
+				6EE0E14F30643458007477B5 /* learnXcode */,
 				6E6131943045C45B00742002 /* learnXcodeTests */,
 				6E61319E3045C45B00742002 /* learnXcodeUITests */,
 				6E6131853045C45A00742002 /* Products */,
@@ -114,7 +114,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				6E6131863045C45A00742002 /* learnXcode */,
+				6EE0E14F30643458007477B5 /* learnXcode */,
 			);
 			name = learnXcode;
 			packageProductDependencies = (

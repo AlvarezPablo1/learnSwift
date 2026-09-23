@@ -569,6 +569,14 @@ private func cargar() async {
 
 > **💡 Idea clave:** modelar los estados con un `enum` hace **imposibles los estados imposibles**. La vista siempre está en un caso válido y bien definido.
 
+> **⚠️ Ojo — formato de números en `Text`:** al hacer `Text("Feriados \(year)")`, SwiftUI trata el texto como un `LocalizedStringKey`, y si interpolás un **`Int`** lo formatea **según la región**. En español eso agrega el separador de miles, así que el año `2026` se muestra como **`2.026`**.
+>
+> El separador solo aparece a partir de 1.000 (por eso los `count` chicos, como `pending.count`, no lo sufren). Para mostrar el número "crudo", convertilo a `String`:
+> ```swift
+> .navigationTitle("Feriados \(String(year))")
+> ```
+> Alternativas: `\(year, format: .number.grouping(.never))` o `Text(verbatim: "Feriados \(year)")`.
+
 ---
 
 ## 🧩 Lección 10: Componentes y pestañas
